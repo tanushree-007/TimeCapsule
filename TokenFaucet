@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract TimeCapsule {
+    address public owner = msg.sender;
+
+    // Hardcoded unlock timestamp (e.g., Oct 15, 2030, 00:00 UTC)
+    uint256 public constant unlockTimestamp = 1926950400;
+
+    // Hardcoded secret content (string)
+    string private secretContent = "This is the secret message locked until 2030-10-15.";
+
+    bool public isUnlocked;
+
+    event CapsuleUnlocked(address indexed by, uint256 timestamp);
+
+    modifier onlyAfterUnlock() {
+        require(block.timestamp >= unlockTimestamp, "Capsule is still locked");
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+    // Unlock the capsule after unlockTimestamp
+    function unlockCapsule() public onlyAfterUnlock {
+        require(!isUnlocked, "Already unlocked");
+        isUnlocked = true;
+        emit CapsuleUnlocked(msg.sender, block.timestamp);
+    }
+
+    // Read the secret content only after unlocking
+    function getSecretContent() public view onlyAfterUnlock returns (string memory) {
+        require(isUnlocked, "Capsule not unlocked yet");
+        return secretContent;
+    }
+
+    // Owner can update secret before unlocking if needed
+    function updateSecretContent(string memory newContent) public onlyOwner {
+        require(!isUnlocked, "Cannot update after unlocking");
+        secretContent = newContent;
+    }
+}
